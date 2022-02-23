@@ -1,6 +1,8 @@
-import dgram from "dgram";
-import net, { NetConnectOpts } from "net";
+import net from "net";
+import { resolve } from "path";
 import { AmpCommand } from "./AmpCommand";
+import { AmpReturn, CommandReturn, ReturnData } from "./AmpReturn";
+import { ACK, ERR, NAK } from "./Returns";
 
 export enum Connection {
     TCP = "tcp",
@@ -8,57 +10,70 @@ export enum Connection {
 }
 
 export class AmpChannel {
-    constructor(host:string,port: number,channel?: string, socketType:Connection = Connection.TCP) {
+    constructor(host:string,port: number,channel?: string) {
         this.host = host;
         this.port = port;
         this.channel = channel;
-        switch(socketType) {
-            case Connection.TCP:
-                this.socket = new net.Socket();
-                break
-            case Connection.UDP:
-                this.socket = new dgram.Socket();
-        }
     }
 
-    open() : void {
-        const callback = () => {
-            if(this.channel === undefined || this.channel === "")
-                this.send("CRAT0014",() => {});
+    open() :void {
+        const callback = async () => {
+            if(this.channel === undefined || this.channel === "") {
+                const buffer = await this.send("CRAT0014");
+                if(buffer.toString() === ACK.code)
+                    this.crat_open = true;
+            }
             else {
                 const length = this.channel.length;
-                this.send(`CRAT${this.zeroPad(length + 3,4)}2${length}${this.channel}`,() => {})
+                const buffer = await this.send(`CRAT${this.zeroPad(length + 3,4)}2${this.zeroPad(length,2)}${this.channel}`);
+                if(buffer.toString() === ACK.code)
+                    this.crat_open = true;
             }
         }
-        if(this.socket as dgram.Socket) (this.socket as dgram.Socket).connect(this.port,this.host,callback);
-        if(this.socket as net.Socket) (this.socket as net.Socket).connect({port:this.port,host:this.host},callback);
+        this.socket.connect({port:this.port,host:this.host},callback);
+        this.socket.on("error",(err) => {
+            console.log(err);
+            this.crat_open = false;
+        })
     }
 
     close() : void {
-        this.send("STOP0000",() => {});
-        if(this.socket as dgram.Socket) (this.socket as dgram.Socket).close();
-        if(this.socket as net.Socket) (this.socket as net.Socket).end();
+        if(this.crat_open) {
+            this.send("STOP0000");
+            this.socket.end();
+        }
     }
 
-    send(command:string, res:(data:string) => void): void {
-        if(this.socket as dgram.Socket) this.sendUDP(command,res);
-        if(this.socket as net.Socket) this.sendTCP(command,res);
+    send(command:string): Promise<Buffer> {
+        return this.sendTCP(command);
     }
 
-    sendCommand(command:AmpCommand, data:{byteCount?:string,commandCode?:string,data:any[]}): void {
-        this.send(`CMD${this.replaceByteCountCommandCode(command,data.byteCount,data.commandCode)}`,(data:string) => {
-
-        });
+    async sendCommand(command:AmpCommand, data:{byteCount?:string,commandCode?:string,data:any[]}) : Promise<CommandReturn> {
+        if(this.crat_open) {
+            let cmd = this.replaceByteCountCommandCode(command,data.byteCount,data.commandCode);
+            cmd = cmd + this.encodeSendData(command,data);
+            const buffer = await this.send(`CMDS${this.zeroPad(cmd.length,4)}${cmd}`);
+                return new Promise<CommandReturn>((resolve) => {
+                    const strbuffer = buffer.toString();
+                    if(strbuffer === NAK.code || strbuffer === ERR.code) resolve({code: strbuffer})
+            });
+        }
+        throw "Amp Channel not open";
     }
 
-    private sendTCP(command:string,res:(data:string)=> void): void {
-        (this.socket as dgram.Socket).send(command + "\n");
-        this.socket.on("data",res);
-    }
+     private encodeSendData(command: AmpCommand,data:{byteCount?:string,commandCode?:string,data:any[]}) : string {
+        if(data.data.length === 0)
+            return "";
+        return "";
+     }
 
-    private sendUDP(command:string,res:(data:string)=> void): void {
-        (this.socket as net.Socket).write(command + "\n");
-        this.socket.on("data",res);
+    private sendTCP(command:string): Promise<Buffer> {
+        return new Promise<Buffer>((resolve) => {
+        this.socket.write(command + "\n",() => {
+            this.socket.once('data',(buffer:Buffer) => {
+                resolve(buffer);
+            })
+        });});
     }
 
     private zeroPad(str: number, places: number): string {
@@ -78,8 +93,10 @@ export class AmpChannel {
         return out;
     }
 
-    private socket: dgram.Socket | net.Socket; 
+    private socket: net.Socket = new net.Socket(); 
     private host: string;
     private port: number;
     private channel?: string;
+    private listeners: Promise<any>[] = [];
+    private crat_open: boolean = false;
 }

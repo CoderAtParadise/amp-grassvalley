@@ -1,12 +1,8 @@
 import { AmpReturn } from "./AmpReturn";
 
-export interface CommandData<T> {
-    data: T;
-}
-
 export interface SendData<T> {
-    encode:(    sendCode?: string,
-        commandCode?: string) => [string,number];
+    optional: boolean
+    encode: (value: T, sendCode?: string, commandCode?: string) => [string,number];
 }
 
 export interface AmpCommand {
