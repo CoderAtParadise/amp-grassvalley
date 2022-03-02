@@ -1,17 +1,16 @@
-export interface ReturnData<T> {
-    bytes:number;
-    decode:(data:string) => T;
+export interface ReturnDataDecoder<T> {
+    decode:(data:string,byteCount:string,commandCode:string) => T;
 }
 
 export interface CommandReturn {
     code: string;
-    data?: any[];
+    data?: any;
 }
 
 export interface AmpReturn {
     code: string;
     byteCount?: string[];
     commandCode?: string[];
-    returnData?: ReturnData<any>[];
+    returnData?: ReturnDataDecoder<any>;
     loopingReturnData?:boolean;
 }

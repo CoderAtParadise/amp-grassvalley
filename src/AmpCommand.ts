@@ -1,15 +1,11 @@
 import { AmpReturn } from "./AmpReturn";
 
-export interface SendData<T> {
-    optional: boolean
-    encode: (value: T, sendCode?: string, commandCode?: string) => [string,number];
-}
+export interface SendDataEncoder<DataType> {encode:(data:DataType,byteCount?:string, commandCode?:string) => string;}
 
 export interface AmpCommand {
     code:string;
     byteCount?: string[];
     commandCode?: string[];
-    sendData?: SendData<any>[];
-    loopingSendData?: boolean;
+    sendData?: SendDataEncoder<any>;
     validReturns: AmpReturn[];
 }

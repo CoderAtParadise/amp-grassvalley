@@ -1,13 +1,9 @@
 import net from "net";
-import { resolve } from "path";
 import { AmpCommand } from "./AmpCommand";
-import { AmpReturn, CommandReturn, ReturnData } from "./AmpReturn";
+import { AmpReturn, CommandReturn } from "./AmpReturn";
 import { ACK, ERR, NAK } from "./Returns";
-
-export enum Connection {
-    TCP = "tcp",
-    UDP = "udp"
-}
+import { zeroPad } from "./encodeUtils";
+import { stringify } from "querystring";
 
 export class AmpChannel {
     constructor(host:string,port: number,channel?: string) {
@@ -25,7 +21,7 @@ export class AmpChannel {
             }
             else {
                 const length = this.channel.length;
-                const buffer = await this.send(`CRAT${this.zeroPad(length + 3,4)}2${this.zeroPad(length,2)}${this.channel}`);
+                const buffer = await this.send(`CRAT${zeroPad(length + 3,4)}2${zeroPad(length,2)}${this.channel}`);
                 if(buffer.toString() === ACK.code)
                     this.crat_open = true;
             }
@@ -48,23 +44,30 @@ export class AmpChannel {
         return this.sendTCP(command);
     }
 
-    async sendCommand(command:AmpCommand, data:{byteCount?:string,commandCode?:string,data:any[]}) : Promise<CommandReturn> {
+    async sendCommand(command:AmpCommand, data?:{byteCount?:string,commandCode?:string,data?:any}) : Promise<CommandReturn> {
         if(this.crat_open) {
-            let cmd = this.replaceByteCountCommandCode(command,data.byteCount,data.commandCode);
+            let cmd = this.replaceByteCountCommandCode(command,data?.byteCount,data?.commandCode);
             cmd = cmd + this.encodeSendData(command,data);
-            const buffer = await this.send(`CMDS${this.zeroPad(cmd.length,4)}${cmd}`);
+            //cmd =  cmd + this.generateChecksum(cmd);
+            const buffer = await this.send(`CMDS${zeroPad(cmd.length,4)}${cmd}`);
                 return new Promise<CommandReturn>((resolve) => {
                     const strbuffer = buffer.toString();
-                    if(strbuffer === NAK.code || strbuffer === ERR.code) resolve({code: strbuffer})
+                    const code = strbuffer.slice(0,4);
+                    const dataStr = strbuffer.slice(4);
+                    if(code === NAK.code || code === ERR.code) resolve({code: strbuffer});
+                    const ret = command.validReturns.find((value:AmpReturn) => this.checkByteCountCommandCode(value,code));
+                    if(ret?.returnData) {
+                        const data = ret.returnData.decode(dataStr,code.at(1)!,code.at(3)!) ;
+                         resolve({code:code,data:data});
+                    }
+                    resolve({code:code});
             });
         }
         throw "Amp Channel not open";
     }
 
-     private encodeSendData(command: AmpCommand,data:{byteCount?:string,commandCode?:string,data:any[]}) : string {
-        if(data.data.length === 0)
-            return "";
-        return "";
+     private encodeSendData(command: AmpCommand,data?:{byteCount?:string,commandCode?:string,data?:any}) : string {
+        return command.sendData?.encode(data?.data,data?.byteCount,data?.commandCode) || "";
      }
 
     private sendTCP(command:string): Promise<Buffer> {
@@ -76,12 +79,18 @@ export class AmpChannel {
         });});
     }
 
-    private zeroPad(str: number, places: number): string {
-        return String(Math.floor(str)).padStart(places, "0");
+    private checkByteCountCommandCode (command:AmpReturn,code:string): boolean {
+        Array.from(code).forEach((char:String,index:number) => {
+            const cchar = command.code.at(index);
+            if(cchar === "x") if(!command.byteCount?.find(element => element === char)) return false;
+            if(cchar === "y") if(!command.commandCode?.find(element => element === char)) return false;
+            else if(cchar !== char) return false; 
+        })
+        return true;
     }
 
     private replaceByteCountCommandCode(
-        command: AmpCommand,
+        command: AmpCommand | AmpReturn,
         byteCount?:string,
         commandCode?: string,
     ): string {
@@ -93,10 +102,17 @@ export class AmpChannel {
         return out;
     }
 
+    private generateChecksum(command:string) {
+        let sum = 0x00;
+        const data = command
+        while(data != "") {
+        }
+        return sum;
+    }
+
     private socket: net.Socket = new net.Socket(); 
     private host: string;
     private port: number;
     private channel?: string;
-    private listeners: Promise<any>[] = [];
     private crat_open: boolean = false;
 }
