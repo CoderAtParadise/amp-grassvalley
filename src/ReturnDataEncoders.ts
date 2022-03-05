@@ -1,13 +1,44 @@
 import { ReturnDataDecoder } from "./AmpReturn";
+import { decodeTimecode, hexToBits, hexToString } from "./decodeUtils";
 import { zeroPad } from "./encodeUtils";
 
 export const TimeUserBitsDecoder : ReturnDataDecoder<{timecode:string,userBits?:string}> = {
     decode:(data:string,byteCount:string,commandCode:string) : {timecode:string,userBits?:string} => {
         if(commandCode === "D") return {timecode:"--:--:--:--"};
-        const frames = data.slice(0,2);
-        const seconds = data.slice(2,4);
-        const minutes = data.slice(4,6);
-        const hours = data.slice(6,8);
-        return {timecode:`${zeroPad(hours,2)}:${zeroPad(minutes,2)}:${zeroPad(seconds,2)};${zeroPad(frames,2)}`};
+        return {timecode:decodeTimecode(data)};
+    }
+}
+
+export const IDDecoder: ReturnDataDecoder<{name:string}> = {
+    decode:(data:string,byteCount:string,commandCode:string) => {
+        if(byteCount === "2") {
+            const charCount = parseInt(data.slice(4,8),16);
+            const chars = data.slice(8,8 + charCount * 2);
+            return {name:hexToString(chars)}
+        }
+        return {name:"no clip loaded"};
+    }
+}
+
+export const IDDurationDecoder: ReturnDataDecoder<{timecode:string}> = {
+    decode:(data:string,byteCount:string,commandCode:string) => {
+        if(byteCount === "4")
+            return {timecode:decodeTimecode(data)};
+        return  {timecode:"--:--:--:--"}
+    }
+}
+
+export const IDStatusDecoder: ReturnDataDecoder<{IdInStorage?:boolean,IDLoaded?:boolean, ReadyForPlayback?:boolean,LoadedInAnotherChannel?:boolean}> = {
+    decode:(data:string,byteCount:string,commandCode:string) =>
+    {
+        // NOOP
+        
+        // switch(hexToBits(data)) {
+        //     case 1:
+        //         return {IdInStorage:true};
+        //     case 2:
+        //         return {IDLoaded:true};
+        // }
+        return {};
     }
 }

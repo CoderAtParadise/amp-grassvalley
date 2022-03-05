@@ -1,12 +1,10 @@
 import { SendDataEncoder } from "./AmpCommand";
-import { zeroPad } from "./encodeUtils";
+import { reverseTimecode, toHex, zeroPad } from "./encodeUtils";
 
 export const OptionalTimecodeEncoder: SendDataEncoder<{timecode:string}> = { 
     encode: (data:{timecode:string},byteCount?:string) => {
         if (byteCount === "4") {
-            let str = data.timecode.replace(":","");
-            str = str.split("").reverse().join("");
-            return str;
+            return reverseTimecode(data.timecode);
         }
         return "";
     }
@@ -23,10 +21,32 @@ interface CurrentTimeSenseData {
     LTCTimeFromTimecodeTrack?: boolean;
 }
 
-export const InPresetEncoder: SendDataEncoder<{clipname?:string,timecode?:string}> = {
-    encode: (data:{clipname?:string,timecode?:string},byteCount?:string) => {
-
+export const InPresetEncoder: SendDataEncoder<{clipName:string,type?:string,timecode?:string}> = {
+    encode: (data:{clipName:string,type?:string,timecode?:string},byteCount?:string) => {
+        let actualbytes = 2;
+        switch(byteCount) {
+            case "A":
+                actualbytes = actualbytes + data.clipName.length;
+                return `${toHex(actualbytes,4)}${zeroPad(data.clipName.length,4)}${toHex(data.clipName)}`;
+            case "E":
+                actualbytes = actualbytes + data.clipName.length + 1;
+                if(data.type === "A") {
+                    return `${toHex(actualbytes,4)}0A${zeroPad(data.clipName.length,4)}${toHex(data.clipName)}`;
+                }
+                else if (data.type === "E") {
+                    return `${toHex(actualbytes,4)}0E${zeroPad(data.clipName.length,4)}${reverseTimecode(data.timecode!)}${toHex(data.clipName)}`;
+                }
+        }
         return "";
+    }
+}
+
+export const IDStatusEncoder: SendDataEncoder<{clipName:string}> = {
+    encode: (data:{clipName:string},byteCount?:string) => {
+       if(byteCount === "A") {
+            return `${toHex(data.clipName.length)}${toHex(data.clipName)}`;
+       }
+        return `${toHex(data.clipName)}`;
     }
 }
 
@@ -41,5 +61,11 @@ export const CurrentTimeSenseSendData: SendDataEncoder<CurrentTimeSenseData> = {
         sum = sum + (data?.LTCTimeFromSource ? 64: 0);
         sum = sum + (data?.VITCTimeFromSource ? 128: 0);
         return zeroPad(sum.toString(16),2);
+    }
+}
+
+export const IDDurationEncoder: SendDataEncoder<{clipName:string}> = {
+    encode: (data:{clipName:string}) => {
+        return `${toHex(data.clipName.length,4)}${toHex(data.clipName)}`;
     }
 }

@@ -1,6 +1,6 @@
 import { AmpCommand } from "./AmpCommand";
-import { ACK, IDListing, TimeUserBits } from "./Returns";
-import { CurrentTimeSenseSendData, InPresetEncoder, OptionalTimecodeEncoder } from "./SendDataEncoders";
+import { ACK, IDDuration, IDListing, IDLoaded, IDStatus, TimeUserBits } from "./Returns";
+import { CurrentTimeSenseSendData, IDDurationEncoder, IDStatusEncoder, InPresetEncoder, OptionalTimecodeEncoder } from "./SendDataEncoders";
 
 export const Play: AmpCommand = {
     code: "2x01",
@@ -20,7 +20,6 @@ export const Stop: AmpCommand = {
 export const InPreset: AmpCommand = {
     code: "4x14",
     byteCount: ["0","2","4","8","C","A","E"],
-
     sendData: InPresetEncoder,
     validReturns:[ACK]
 }
@@ -42,14 +41,26 @@ export const ListNextID: AmpCommand = {
     validReturns: [IDListing]
 }
 
-// export const IDStatusRequest: AmpCommand = {
-//     code: "Ax18",
-//     byteCount:["8","A"],
-//     validReturns:
-// }
+export const IDStatusRequest: AmpCommand = {
+    code: "Ax18",
+    byteCount:["8","A"],
+    sendData: IDStatusEncoder,
+    validReturns: [IDStatus]
+}
 
 export const CurrentTimeSense: AmpCommand = {
     code: "610C",
     sendData: CurrentTimeSenseSendData,
     validReturns: [TimeUserBits]
+}
+
+export const IDLoadedRequest: AmpCommand = {
+    code:"A016",
+    validReturns: [IDLoaded]
+}
+
+export const IDDurationRequest: AmpCommand = {
+    code:"A217",
+    sendData: IDDurationEncoder,
+    validReturns: [IDDuration]
 }

@@ -1,5 +1,5 @@
 {
-  "name": "amp-grassvalley",
+  "name": "@coderatparadise/amp-grassvalley",
   "version": "1.0.0",
   "private": false,
   "description": "Node implementation of the Grassvalley Amp Specification v4",
