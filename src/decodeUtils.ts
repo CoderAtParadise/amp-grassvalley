@@ -1,4 +1,4 @@
-import { zeroPad } from "./encodeUtils";
+import { zeroPad } from "./encodeUtils.js";
 
 export function hexToString(hex:string) : string {
     let str = "";
@@ -26,7 +26,6 @@ export function hexToBits(hex:string) : number {
 }
 
 export function decodeTimecode(timecode:string): string {
-    console.log(timecode);
     const frames = timecode.slice(0,2);
     const seconds = timecode.slice(2,4);
     const minutes = timecode.slice(4,6);

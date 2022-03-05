@@ -1,9 +1,8 @@
 import net from "net";
-import { AmpCommand } from "./AmpCommand";
-import { AmpReturn, CommandReturn } from "./AmpReturn";
-import { ACK, ERR, NAK } from "./Returns";
-import { zeroPad } from "./encodeUtils";
-import { stringify } from "querystring";
+import { AmpCommand } from "./AmpCommand.js";
+import { AmpReturn, CommandReturn } from "./AmpReturn.js";
+import { ACK, ERR, NAK } from "./Returns.js";
+import { zeroPad } from "./encodeUtils.js";
 
 export class AmpChannel {
     constructor(host:string,port: number,channel?: string) {

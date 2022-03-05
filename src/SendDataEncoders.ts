@@ -1,5 +1,5 @@
-import { SendDataEncoder } from "./AmpCommand";
-import { reverseTimecode, toHex, zeroPad } from "./encodeUtils";
+import { SendDataEncoder } from "./AmpCommand.js";
+import { reverseTimecode, toHex, zeroPad } from "./encodeUtils.js";
 
 export const OptionalTimecodeEncoder: SendDataEncoder<{timecode:string}> = { 
     encode: (data:{timecode:string},byteCount?:string) => {
@@ -44,7 +44,8 @@ export const InPresetEncoder: SendDataEncoder<{clipName:string,type?:string,time
 export const IDStatusEncoder: SendDataEncoder<{clipName:string}> = {
     encode: (data:{clipName:string},byteCount?:string) => {
        if(byteCount === "A") {
-            return `${toHex(data.clipName.length)}${toHex(data.clipName)}`;
+           const actualbytes = 2 + data.clipName;
+            return `${toHex(data.clipName.length,4)}${toHex(data.clipName)}`;
        }
         return `${toHex(data.clipName)}`;
     }
@@ -66,6 +67,17 @@ export const CurrentTimeSenseSendData: SendDataEncoder<CurrentTimeSenseData> = {
 
 export const IDDurationEncoder: SendDataEncoder<{clipName:string}> = {
     encode: (data:{clipName:string}) => {
-        return `${toHex(data.clipName.length,4)}${toHex(data.clipName)}`;
+        const actualbytes = 2 + data.clipName.length;
+        return `${toHex(actualbytes,4)}${toHex(data.clipName.length,4)}${toHex(data.clipName)}`;
+    }
+}
+
+export const ClipDataRequestEncoder: SendDataEncoder<{type:string,clipName:string}> = {
+    encode: (data:{type:string, clipName:string}) => {
+        if(data.type === "C") {
+            const actualbytes = 3 + data.clipName.length;
+            return `${toHex(actualbytes,4)}0C${toHex(data.clipName.length,4)}${toHex(data.clipName)}`;
+        }
+        return "";
     }
 }
