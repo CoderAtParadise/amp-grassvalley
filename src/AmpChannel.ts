@@ -3,6 +3,7 @@ import { AmpCommand } from "./AmpCommand.js";
 import { AmpReturn, CommandReturn } from "./AmpReturn.js";
 import { ACK, ERR, NAK } from "./Returns.js";
 import { zeroPad } from "./encodeUtils.js";
+import { ConditionalDeferred } from "./ConditionalDeferred.js";
 
 export class AmpChannel {
     constructor(host:string,port: number,channel?: string) {
@@ -14,13 +15,13 @@ export class AmpChannel {
     open() :void {
         const callback = async () => {
             if(this.channel === undefined || this.channel === "") {
-                const buffer = await this.send("CRAT0014");
+                const buffer = await this.send("CRAT0014",() => true);
                 if(buffer.toString() === ACK.code)
                     this.crat_open = true;
             }
             else {
                 const length = this.channel.length;
-                const buffer = await this.send(`CRAT${zeroPad(length + 3,4)}2${zeroPad(length,2)}${this.channel}`);
+                const buffer = await this.send(`CRAT${zeroPad(length + 3,4)}2${zeroPad(length,2)}${this.channel}`,() => true);
                 if(buffer.toString() === ACK.code)
                     this.crat_open = true;
             }
@@ -29,18 +30,30 @@ export class AmpChannel {
         this.socket.on("error",(err) => {
             console.log(err);
             this.crat_open = false;
+        });
+        this.socket.on("data",(buffer:Buffer) => {
+            for(let i = 0; i < this.promises.length; i++) {
+                const promise = this.promises[i];
+                const resolve = promise.canResolve(buffer);
+                if(resolve) {
+                    promise.resolve!(buffer);
+                    this.promises.splice(i,1);
+                    break;
+                }
+            }
         })
     }
 
     close() : void {
         if(this.crat_open) {
-            this.send("STOP0000");
+            this.send("STOP0000",() => true);
             this.socket.end();
         }
     }
 
-    send(command:string): Promise<Buffer> {
-        return this.sendTCP(command);
+    send(command:string,canResolve:(buffer:Buffer) => boolean): Promise<Buffer> {
+        return this.sendTCP(command,canResolve);
+        
     }
 
     async sendCommand(command:AmpCommand, data?:{byteCount?:string,commandCode?:string,data?:any}) : Promise<CommandReturn> {
@@ -48,7 +61,15 @@ export class AmpChannel {
             let cmd = this.replaceByteCountCommandCode(command,data?.byteCount,data?.commandCode);
             cmd = cmd + this.encodeSendData(command,data);
             //cmd =  cmd + this.generateChecksum(cmd);
-            const buffer = await this.send(`CMDS${zeroPad(cmd.length,4)}${cmd}`);
+            const buffer = await  this.send(`CMDS${zeroPad(cmd.length,4)}${cmd}`,(buffer:Buffer) => {
+                const strbuffer = buffer.toString();
+                const code = strbuffer.slice(0,4);
+                if(code === NAK.code || code === ERR.code) return true;
+                const ret = command.validReturns.find((value:AmpReturn) => this.checkByteCountCommandCode(value,code));
+                if(ret !== undefined)
+                    return true;
+                return false;
+            });
                 return new Promise<CommandReturn>((resolve) => {
                     const strbuffer = buffer.toString();
                     const code = strbuffer.slice(0,4);
@@ -69,22 +90,20 @@ export class AmpChannel {
         return command.sendData?.encode(data?.data,data?.byteCount,data?.commandCode) || "";
      }
 
-    private sendTCP(command:string): Promise<Buffer> {
-        return new Promise<Buffer>((resolve) => {
-        this.socket.write(command + "\n",() => {
-            this.socket.once('data',(buffer:Buffer) => {
-                resolve(buffer);
-            })
-        });});
+    private sendTCP(command:string,canResolve: (buffer:Buffer) => boolean): Promise<Buffer> {
+        this.socket.write(command + "\n");
+        const deferred = this.promises[this.promises.push(new ConditionalDeferred<Buffer>(canResolve)) - 1];
+        return deferred.promise;
     }
 
     private checkByteCountCommandCode (command:AmpReturn,code:string): boolean {
-        Array.from(code).forEach((char:String,index:number) => {
-            const cchar = command.code.at(index);
-            if(cchar === "x") if(!command.byteCount?.find(element => element === char)) return false;
-            if(cchar === "y") if(!command.commandCode?.find(element => element === char)) return false;
+        for(let i =0; i < code.length; i++) {
+            const char = code.at(i);
+            const cchar = command.code.at(i);
+            if (cchar === "x") {if(!command.byteCount?.find(element => element === char)) return false;}
+            else if(cchar === "y") {if(!command.commandCode?.find(element => element === char)) return false;}
             else if(cchar !== char) return false; 
-        })
+    }
         return true;
     }
 
@@ -114,4 +133,5 @@ export class AmpChannel {
     private port: number;
     private channel?: string;
     private crat_open: boolean = false;
+    private promises: ConditionalDeferred<Buffer>[] = [];
 }
