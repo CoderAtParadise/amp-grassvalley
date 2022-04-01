@@ -1,5 +1,5 @@
 import { AmpChannel } from "./AmpChannel.js";
-import { CurrentTimeSense, Play,Stop,InPreset,IDStatusRequest,IDLoadedRequest,IDDurationRequest } from "./Commands.js";
+import { CurrentTimeSense, Play,Stop,InPreset,IDStatusRequest,IDLoadedRequest,IDDurationRequest, StatusSense, IDCountRequest,ListFirstID,ListNextID } from "./Commands.js";
 
 export {
     AmpChannel,
@@ -9,5 +9,9 @@ export {
     InPreset,
     IDStatusRequest,
     IDLoadedRequest,
-    IDDurationRequest
+    IDDurationRequest,
+    StatusSense,
+    IDCountRequest,
+    ListFirstID,
+    ListNextID,
 }

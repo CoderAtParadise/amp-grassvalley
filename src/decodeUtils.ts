@@ -25,6 +25,14 @@ export function hexToBits(hex:string) : number {
     return sum;
 }
 
+export function hexToNumber(hex:string): number {
+    return parseInt(hex,16);
+}
+
+export function getBit(byte: number,bit: number) {
+    return (byte >> bit) % 2;
+}
+
 export function decodeTimecode(timecode:string): string {
     const frames = timecode.slice(0,2);
     const seconds = timecode.slice(2,4);

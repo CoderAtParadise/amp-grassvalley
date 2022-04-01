@@ -100,9 +100,9 @@ export class AmpChannel {
         for(let i =0; i < code.length; i++) {
             const char = code.at(i);
             const cchar = command.code.at(i);
-            if (cchar === "x") {if(!command.byteCount?.find(element => element === char)) return false;}
-            else if(cchar === "y") {if(!command.commandCode?.find(element => element === char)) return false;}
-            else if(cchar !== char) return false; 
+            if (cchar === "x") {if(!command.byteCount?.find(element => element === char || element === char?.toUpperCase())) return false;}
+            else if(cchar === "y") {if(!command.commandCode?.find(element => element === char || element === char?.toUpperCase())) return false;}
+            else if(cchar !== char && cchar !== char?.toUpperCase()) return false; 
     }
         return true;
     }

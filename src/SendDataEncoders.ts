@@ -1,4 +1,6 @@
+import { count } from "console";
 import { SendDataEncoder } from "./AmpCommand.js";
+import { hexToNumber } from "./decodeUtils.js";
 import { reverseTimecode, toHex, zeroPad } from "./encodeUtils.js";
 
 export const OptionalTimecodeEncoder: SendDataEncoder<{timecode:string}> = { 
@@ -41,6 +43,20 @@ export const InPresetEncoder: SendDataEncoder<{clipName:string,type?:string,time
     }
 }
 
+export const ListFirstIDEncoder: SendDataEncoder<{}> = {
+    encode: (data:{},byteCount?:string) => {
+        if(byteCount === "2")
+            return "0000";
+        return "";
+    }
+}
+
+export const ListNextIDEncoder: SendDataEncoder<{count:number}> = {
+    encode: (data:{count:number}) => {
+        return toHex(data.count,2);
+    }
+}
+
 export const IDStatusEncoder: SendDataEncoder<{clipName:string}> = {
     encode: (data:{clipName:string},byteCount?:string) => {
        if(byteCount === "A") {
@@ -69,6 +85,12 @@ export const IDDurationEncoder: SendDataEncoder<{clipName:string}> = {
     encode: (data:{clipName:string}) => {
         const actualbytes = 2 + data.clipName.length;
         return `${toHex(actualbytes,4)}${toHex(data.clipName.length,4)}${toHex(data.clipName)}`;
+    }
+}
+
+export const StatusSenseSendData: SendDataEncoder<{byte: string}> = {
+    encode: (data:{byte:string}) => {
+        return `${zeroPad(data.byte,2)}`;
     }
 }
 

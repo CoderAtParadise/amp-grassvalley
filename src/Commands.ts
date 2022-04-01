@@ -1,6 +1,6 @@
 import { AmpCommand } from "./AmpCommand.js";
-import { ACK, ClipData, IDDuration, IDListing, IDLoaded, IDStatus, TimeUserBits } from "./Returns.js";
-import { ClipDataRequestEncoder, CurrentTimeSenseSendData, IDDurationEncoder, IDStatusEncoder, InPresetEncoder, OptionalTimecodeEncoder } from "./SendDataEncoders.js";
+import { ACK, ClipData, IDCount, IDDuration, IDListing, IDLoaded, IDStatus, ReturnStatusSense, TimeUserBits } from "./Returns.js";
+import { ClipDataRequestEncoder, CurrentTimeSenseSendData, IDDurationEncoder, IDStatusEncoder, InPresetEncoder, ListFirstIDEncoder, ListNextIDEncoder, OptionalTimecodeEncoder, StatusSenseSendData } from "./SendDataEncoders.js";
 
 export const Play: AmpCommand = {
     code: "2x01",
@@ -29,15 +29,22 @@ export const Eject: AmpCommand = {
      validReturns: [ACK]
 }
 
+export const IDCountRequest: AmpCommand = {
+    code: "A026",
+    validReturns: [IDCount]
+}
+
 export const ListFirstID: AmpCommand = {
     code: "Ax14",
     byteCount: ["0","2"],
+    sendData: ListFirstIDEncoder,
     validReturns: [IDListing]
 }
 
 export const ListNextID: AmpCommand = {
     code: "Ax15",
     byteCount:  ["0","1"],
+    sendData: ListNextIDEncoder,
     validReturns: [IDListing]
 }
 
@@ -52,6 +59,12 @@ export const CurrentTimeSense: AmpCommand = {
     code: "610C",
     sendData: CurrentTimeSenseSendData,
     validReturns: [TimeUserBits]
+}
+
+export const StatusSense: AmpCommand = {
+    code: "6120",
+    sendData: StatusSenseSendData,
+    validReturns: [ReturnStatusSense]
 }
 
 export const IDLoadedRequest: AmpCommand = {
