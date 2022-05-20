@@ -1,6 +1,6 @@
 import { AmpCommand } from "./AmpCommand.js";
 import { ACK, ClipData, IDCount, IDDuration, IDListing, IDLoaded, IDStatus, ReturnStatusSense, TimeUserBits } from "./Returns.js";
-import { ClipDataRequestEncoder, CurrentTimeSenseSendData, IDDurationEncoder, IDStatusEncoder, InPresetEncoder, ListFirstIDEncoder, ListNextIDEncoder, OptionalTimecodeEncoder, StatusSenseSendData } from "./SendDataEncoders.js";
+import { ClipDataRequestEncoder, CueUpWithDataEncode, CurrentTimeSenseSendData, IDDurationEncoder, IDStatusEncoder, InPresetEncoder, ListFirstIDEncoder, ListNextIDEncoder, OptionalTimecodeEncoder, StatusSenseSendData } from "./SendDataEncoders.js";
 
 export const Play: AmpCommand = {
     code: "2x01",
@@ -24,9 +24,16 @@ export const InPreset: AmpCommand = {
     validReturns:[ACK]
 }
 
+export const PreviewInPreset: AmpCommand = {
+    code: "Ax04",
+    byteCount: ["0","2","4","8","C","A","E"],
+    sendData: InPresetEncoder,
+    validReturns:[ACK]
+}
+
 export const Eject: AmpCommand = {
     code: "200F",
-     validReturns: [ACK]
+    validReturns: [ACK]
 }
 
 export const IDCountRequest: AmpCommand = {
@@ -82,4 +89,11 @@ export const ClipDataRequest: AmpCommand = {
     code: "AA13",
     sendData: ClipDataRequestEncoder,
     validReturns: [ClipData]
+}
+
+export const CueUpWithData: AmpCommand = {
+    code: "2x31",
+    byteCount: ["0","4","8","C"],
+    sendData: CueUpWithDataEncode,
+    validReturns: [ACK]
 }

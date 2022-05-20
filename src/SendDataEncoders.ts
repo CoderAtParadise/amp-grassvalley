@@ -103,3 +103,16 @@ export const ClipDataRequestEncoder: SendDataEncoder<{type:string,clipName:strin
         return "";
     }
 }
+
+export const CueUpWithDataEncode: SendDataEncoder<{timecode?:string,clipName?:string}> = {
+    encode: (data:{timecode?:string,clipName?:string},byteCount?:string) => {
+        if(byteCount === "4")
+            return `${reverseTimecode(data!.timecode as string)}`;
+        else if(byteCount === "8")
+            return `${data.clipName}`;
+        else if(byteCount === "C")
+            return `${reverseTimecode(data!.timecode as string)}${data.clipName}`;
+        else
+            return ""
+    }
+}
