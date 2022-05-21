@@ -1,6 +1,6 @@
 import { AmpCommand } from "./AmpCommand.js";
 import { ACK, ClipData, IDCount, IDDuration, IDListing, IDLoaded, IDStatus, ReturnStatusSense, TimeUserBits } from "./Returns.js";
-import { ClipDataRequestEncoder, CueUpWithDataEncode, CurrentTimeSenseSendData, IDDurationEncoder, IDStatusEncoder, InPresetEncoder, ListFirstIDEncoder, ListNextIDEncoder, OptionalTimecodeEncoder, StatusSenseSendData } from "./SendDataEncoders.js";
+import { ClipDataRequestEncoder, CueUpWithDataEncoder, CurrentTimeSenseSendData, IDDurationEncoder, IDStatusEncoder, InPresetEncoder, ListFirstIDEncoder, ListNextIDEncoder, OptionalTimecodeEncoder, StatusSenseSendData } from "./SendDataEncoders.js";
 
 export const Play: AmpCommand = {
     code: "2x01",
@@ -94,6 +94,6 @@ export const ClipDataRequest: AmpCommand = {
 export const CueUpWithData: AmpCommand = {
     code: "2x31",
     byteCount: ["0","4","8","C"],
-    sendData: CueUpWithDataEncode,
+    sendData: CueUpWithDataEncoder,
     validReturns: [ACK]
 }

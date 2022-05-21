@@ -104,7 +104,7 @@ export const ClipDataRequestEncoder: SendDataEncoder<{type:string,clipName:strin
     }
 }
 
-export const CueUpWithDataEncode: SendDataEncoder<{timecode?:string,clipName?:string}> = {
+export const CueUpWithDataEncoder: SendDataEncoder<{timecode?:string,clipName?:string}> = {
     encode: (data:{timecode?:string,clipName?:string},byteCount?:string) => {
         if(byteCount === "4")
             return `${reverseTimecode(data!.timecode as string)}`;

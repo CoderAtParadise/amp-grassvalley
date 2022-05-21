@@ -24,7 +24,6 @@ export function toHex(str:string | number,places: number = 2) : string {
 }
 
 export function reverseTimecode(timecode:string) : string {
-    let  str = timecode.replace(":","");
-    str = str.split("").reverse().join("");
+    let  str = timecode.split(":").reverse().join("");
     return str;
 }
