@@ -12,33 +12,38 @@ export class AmpChannel {
         this.channel = channel;
     }
 
-    open(retryHandler: () => void) :void {
+    async open(retryHandler: () => Promise<boolean>) : Promise<boolean> {
+        return new Promise<boolean>((res) => {
         const callback = async () => {
             if(this.channel === undefined || this.channel === "") {
                 const buffer = await this.send("CRAT0014",() => true);
                 if(buffer.toString() === ACK.code)
                     this.crat_open = true;
+                    res(true);
             }
             else {
                 const length = this.channel.length;
                 const buffer = await this.send(`CRAT${zeroPad(length + 3,4)}2${zeroPad(length,2)}${this.channel}`,() => true);
                 if(buffer.toString() === ACK.code)
                     this.crat_open = true;
+                    res(true);
             }
         }
         this.socket.connect({port:this.port,host:this.host},callback);
         this.socket.on("error",(err) => {
             console.log(err);
             this.crat_open = false;
-            retryHandler();
+            res(false);
         });
 
-        this.socket.on("close",() => {
-            if(!this.shutdown) {
+        this.socket.on("close",(err) => {
+            if(!this.shutdown && !err) {
+                console.log("Hello");
                 this.crat_open = false;
                 retryHandler();
+                res(false);
             }
-        })
+        });
 
         this.socket.on("data",(buffer:Buffer) => {
             for(let i = 0; i < this.promises.length; i++) {
@@ -50,7 +55,8 @@ export class AmpChannel {
                     break;
                 }
             }
-        })
+        });
+    });
     }
 
     isOpen(): boolean {
@@ -97,7 +103,7 @@ export class AmpChannel {
                     resolve({code:code});
             });
         }
-        throw "Amp Channel not open";
+        return new Promise((res) =>res({code: "-1"}));
     }
 
      private encodeSendData(command: AmpCommand,data?:{byteCount?:string,commandCode?:string,data?:any}) : string {
