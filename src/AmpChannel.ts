@@ -12,7 +12,7 @@ export class AmpChannel {
         this.channel = channel;
     }
 
-    open() :void {
+    open(retryHandler: () => void) :void {
         const callback = async () => {
             if(this.channel === undefined || this.channel === "") {
                 const buffer = await this.send("CRAT0014",() => true);
@@ -30,7 +30,16 @@ export class AmpChannel {
         this.socket.on("error",(err) => {
             console.log(err);
             this.crat_open = false;
+            retryHandler();
         });
+
+        this.socket.on("close",() => {
+            if(!this.shutdown) {
+                this.crat_open = false;
+                retryHandler();
+            }
+        })
+
         this.socket.on("data",(buffer:Buffer) => {
             for(let i = 0; i < this.promises.length; i++) {
                 const promise = this.promises[i];
@@ -44,10 +53,15 @@ export class AmpChannel {
         })
     }
 
+    isOpen(): boolean {
+        return this.crat_open;
+    }
+
     close() : void {
         if(this.crat_open) {
             this.send("STOP0000",() => true);
             this.socket.end();
+            this.shutdown = true;
         }
     }
 
@@ -133,5 +147,6 @@ export class AmpChannel {
     private port: number;
     private channel?: string;
     private crat_open: boolean = false;
+    private shutdown: boolean = false;
     private promises: ConditionalDeferred<Buffer>[] = [];
 }
