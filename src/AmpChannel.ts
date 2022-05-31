@@ -63,10 +63,11 @@ export class AmpChannel {
         return this.crat_open;
     }
 
-    close() : void {
+    close(restart:boolean) : void {
         if(this.crat_open) {
             this.send("STOP0000",() => true);
             this.socket.end();
+            if(!restart)
             this.shutdown = true;
         }
     }
