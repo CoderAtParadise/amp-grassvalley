@@ -9,8 +9,6 @@
     "lib/"
   ],
   "scripts": {
-    "start": "node ./lib/cjs/index.js",
-    "start:dev": "node --loader ts-node/esm ./src/index.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "build": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json",
