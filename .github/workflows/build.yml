@@ -1,19 +1,17 @@
 name: Build
 on:
   push:
-    tags:
-      - "v*.*.*"
+    branches:
+      - "*"
   workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
-      #Setup .npmrc file to publish to GitHub Packages
       - name: Setup Node 17
         uses: actions/setup-node@v3
         with:
@@ -21,7 +19,6 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
           scope: '@coderatparadise'
           cache: 'yarn'
-      - run: yarn install --frozen-lockfile
-      - run: yarn publish
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - run: yarn
+      - run: yarn lint
+      - run: yarn build

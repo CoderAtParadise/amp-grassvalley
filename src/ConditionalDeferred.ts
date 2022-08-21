@@ -10,5 +10,6 @@ export class ConditionalDeferred<T> {
     promise: Promise<T>;
     canResolve: (buffer:Buffer) => boolean;
     resolve: ((value: T | PromiseLike<T>) => void) | null = null;
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
     reject: ((reason?: any) => void) | null = null;
 }
