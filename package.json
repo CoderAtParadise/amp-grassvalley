@@ -5,7 +5,7 @@
     "packageManager": "yarn@3.2.2",
     "type": "module",
     "files": [
-        "lib/*"
+        "lib"
     ],
     "exports": {
         ".": {
@@ -49,6 +49,10 @@
     ],
     "author": "CoderAtParadise <dawn0966@gmail.com>",
     "license": "ISC",
+    "bugs": {
+      "url": "https://github.com/CoderAtParadise/amp-grassvalley/issues"
+  },
+  "homepage": "https://github.com/CoderAtParadise/amp-grassvalley/lib#readme",
     "devDependencies": {
         "@types/node": "^17.0.45",
         "@typescript-eslint/eslint-plugin": "^5.33.1",
