@@ -2,7 +2,7 @@
     "name": "@coderatparadise/amp-grassvalley",
     "version": "2.0.0",
     "description": "Node implementation of the Grassvalley Amp Specification v4",
-    "packageManager": "yarn@3.2.2",
+    "packageManager": "yarn@4.0.0-rc.18",
     "type": "module",
     "files": [
         "lib"
@@ -50,20 +50,20 @@
     "author": "CoderAtParadise <dawn0966@gmail.com>",
     "license": "ISC",
     "bugs": {
-      "url": "https://github.com/CoderAtParadise/amp-grassvalley/issues"
-  },
-  "homepage": "https://github.com/CoderAtParadise/amp-grassvalley/lib#readme",
+        "url": "https://github.com/CoderAtParadise/amp-grassvalley/issues"
+    },
+    "homepage": "https://github.com/CoderAtParadise/amp-grassvalley/#readme",
     "devDependencies": {
-        "@types/node": "^17.0.45",
-        "@typescript-eslint/eslint-plugin": "^5.33.1",
-        "@typescript-eslint/parser": "^5.33.1",
-        "@yarnpkg/sdks": "^3.0.0-rc.14",
-        "eslint": "^8.22.0",
+        "@types/node": "^18.7.16",
+        "@typescript-eslint/eslint-plugin": "^5.36.2",
+        "@typescript-eslint/parser": "^5.36.2",
+        "@yarnpkg/sdks": "^3.0.0-rc.18",
+        "eslint": "^8.23.0",
         "eslint-config-prettier": "^8.5.0",
-        "eslint-import-resolver-typescript": "^3.4.2",
+        "eslint-import-resolver-typescript": "^3.5.1",
         "eslint-plugin-import": "^2.26.0",
         "eslint-plugin-tsdoc": "^0.2.16",
         "prettier": "^2.7.1",
-        "typescript": "^4.7.4"
+        "typescript": "^4.8.3"
     }
 }

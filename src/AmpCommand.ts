@@ -7,7 +7,7 @@ export interface SendDataEncoder<DataType> {
     ) => string;
 }
 
-export interface AmpCommand {
+export type AmpCommand = {
     code: string;
     byteCount?: string[];
     commandCode?: string[];

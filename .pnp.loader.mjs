@@ -3,12 +3,6 @@ import fs from 'fs';
 import path from 'path';
 import moduleExports, { Module } from 'module';
 
-var PathType;
-(function(PathType2) {
-  PathType2[PathType2["File"] = 0] = "File";
-  PathType2[PathType2["Portable"] = 1] = "Portable";
-  PathType2[PathType2["Native"] = 2] = "Native";
-})(PathType || (PathType = {}));
 const npath = Object.create(path);
 const ppath = Object.create(path.posix);
 npath.cwd = () => process.cwd();
@@ -92,6 +86,11 @@ function readPackage(requestPath) {
   return JSON.parse(fs.readFileSync(jsonPath, `utf8`));
 }
 
+const [major, minor] = process.versions.node.split(`.`).map((value) => parseInt(value, 10));
+const HAS_CONSOLIDATED_HOOKS = major > 16 || major === 16 && minor >= 12;
+const HAS_UNFLAGGED_JSON_MODULES = major > 17 || major === 17 && minor >= 5 || major === 16 && minor >= 15;
+const HAS_JSON_IMPORT_ASSERTION_REQUIREMENT = major > 17 || major === 17 && minor >= 1 || major === 16 && minor > 14;
+
 async function tryReadFile(path2) {
   try {
     return await fs.promises.readFile(path2, `utf8`);
@@ -113,7 +112,6 @@ function setEntrypointPath(file) {
   entrypointPath = file;
 }
 function getFileFormat(filepath) {
-  var _a, _b;
   const ext = path.extname(filepath);
   switch (ext) {
     case `.mjs`: {
@@ -123,16 +121,22 @@ function getFileFormat(filepath) {
       return `commonjs`;
     }
     case `.wasm`: {
-      throw new Error(`Unknown file extension ".wasm" for ${filepath}`);
+      throw new Error(
+        `Unknown file extension ".wasm" for ${filepath}`
+      );
     }
     case `.json`: {
-      throw new Error(`Unknown file extension ".json" for ${filepath}`);
+      if (HAS_UNFLAGGED_JSON_MODULES)
+        return `json`;
+      throw new Error(
+        `Unknown file extension ".json" for ${filepath}`
+      );
     }
     case `.js`: {
       const pkg = readPackageScope(filepath);
       if (!pkg)
         return `commonjs`;
-      return (_a = pkg.data.type) != null ? _a : `commonjs`;
+      return pkg.data.type ?? `commonjs`;
     }
     default: {
       if (entrypointPath !== filepath)
@@ -142,7 +146,7 @@ function getFileFormat(filepath) {
         return `commonjs`;
       if (pkg.data.type === `module`)
         return null;
-      return (_b = pkg.data.type) != null ? _b : `commonjs`;
+      return pkg.data.type ?? `commonjs`;
     }
   }
 }
@@ -170,6 +174,7 @@ async function getSource$1(urlString, context, defaultGetSource) {
 }
 
 async function load$1(urlString, context, nextLoad) {
+  var _a;
   const url = tryParseURL(urlString);
   if ((url == null ? void 0 : url.protocol) !== `file:`)
     return nextLoad(urlString, context, nextLoad);
@@ -177,6 +182,11 @@ async function load$1(urlString, context, nextLoad) {
   const format = getFileFormat(filePath);
   if (!format)
     return nextLoad(urlString, context, nextLoad);
+  if (HAS_JSON_IMPORT_ASSERTION_REQUIREMENT && format === `json` && ((_a = context.importAssertions) == null ? void 0 : _a.type) !== `json`) {
+    const err = new TypeError(`[ERR_IMPORT_ASSERTION_TYPE_MISSING]: Module "${urlString}" needs an import assertion of type "json"`);
+    err.code = `ERR_IMPORT_ASSERTION_TYPE_MISSING`;
+    throw err;
+  }
   return {
     format,
     source: await fs.promises.readFile(filePath, `utf8`),
@@ -187,8 +197,7 @@ async function load$1(urlString, context, nextLoad) {
 const pathRegExp = /^(?![a-zA-Z]:[\\/]|\\\\|\.{0,2}(?:\/|$))((?:node:)?(?:@[^/]+\/)?[^/]+)\/*(.*|)$/;
 const isRelativeRegexp = /^\.{0,2}\//;
 async function resolve$1(originalSpecifier, context, nextResolve) {
-  var _a;
-  const {findPnpApi} = moduleExports;
+  const { findPnpApi } = moduleExports;
   if (!findPnpApi || isBuiltinModule(originalSpecifier))
     return nextResolve(originalSpecifier, context, nextResolve);
   let specifier = originalSpecifier;
@@ -198,9 +207,9 @@ async function resolve$1(originalSpecifier, context, nextResolve) {
       return nextResolve(originalSpecifier, context, nextResolve);
     specifier = fileURLToPath(url);
   }
-  const {parentURL, conditions = []} = context;
+  const { parentURL, conditions = [] } = context;
   const issuer = parentURL ? fileURLToPath(parentURL) : process.cwd();
-  const pnpapi = (_a = findPnpApi(issuer)) != null ? _a : url ? findPnpApi(specifier) : null;
+  const pnpapi = findPnpApi(issuer) ?? (url ? findPnpApi(specifier) : null);
   if (!pnpapi)
     return nextResolve(originalSpecifier, context, nextResolve);
   const dependencyNameMatch = specifier.match(pathRegExp);
@@ -239,10 +248,11 @@ async function resolve$1(originalSpecifier, context, nextResolve) {
 
 const binding = process.binding(`fs`);
 const originalfstat = binding.fstat;
-const ZIP_FD = 2147483648;
+const ZIP_MASK = 4278190080;
+const ZIP_MAGIC = 704643072;
 binding.fstat = function(...args) {
   const [fd, useBigint, req] = args;
-  if ((fd & ZIP_FD) !== 0 && useBigint === false && req === void 0) {
+  if ((fd & ZIP_MASK) === ZIP_MAGIC && useBigint === false && req === void 0) {
     try {
       const stats = fs.fstatSync(fd);
       return new Float64Array([
@@ -263,11 +273,9 @@ binding.fstat = function(...args) {
   return originalfstat.apply(this, args);
 };
 
-const [major, minor] = process.versions.node.split(`.`).map((value) => parseInt(value, 10));
-const hasConsolidatedHooks = major > 16 || major === 16 && minor >= 12;
 const resolve = resolve$1;
-const getFormat = hasConsolidatedHooks ? void 0 : getFormat$1;
-const getSource = hasConsolidatedHooks ? void 0 : getSource$1;
-const load = hasConsolidatedHooks ? load$1 : void 0;
+const getFormat = HAS_CONSOLIDATED_HOOKS ? void 0 : getFormat$1;
+const getSource = HAS_CONSOLIDATED_HOOKS ? void 0 : getSource$1;
+const load = HAS_CONSOLIDATED_HOOKS ? load$1 : void 0;
 
 export { getFormat, getSource, load, resolve };
