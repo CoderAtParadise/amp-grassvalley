@@ -1,10 +1,10 @@
 {
     "name": "@coderatparadise/amp-grassvalley",
-    "version": "2.1.1",
+    "version": "2.1.2",
     "description": "Node implementation of the Grassvalley Amp Specification v4",
     "packageManager": "yarn@4.0.0-rc.18",
     "type": "module",
-    "main": "./lib/cjs/index.js",
+    "main": "lib/cjs/index.cjs",
     "files": [
         "lib"
     ],
@@ -12,38 +12,39 @@
         ".": {
             "types": "./lib/types/index.d.ts",
             "import": "./lib/esm/index.js",
-            "require": "./lib/cjs/index.js"
+            "require": "./lib/cjs/index.cjs"
         },
         "./package.json": "./package.json",
         "./*.js": {
             "types": "./lib/types/*.d.ts",
             "import": "./lib/esm/*.js",
-            "require": "./lib/cjs/*.js"
+            "require": "./lib/cjs/*.cjs"
         },
         "./command": {
             "types": "./lib/types/command/index.d.ts",
             "import": "./lib/esm/command/index.js",
-            "require": "./lib/cjs/command/index.js"
+            "require": "./lib/cjs/command/index.cjs"
         },
         "./command/*.js": {
             "types": "./lib/types/command/*.d.ts",
             "import": "./lib/esm/command/*.js",
-            "require": "./lib/cjs/command/*.js"
+            "require": "./lib/cjs/command/*.cjs"
         },
         "./return": {
             "types": "./lib/types/return/index.d.ts",
             "import": "./lib/esm/return/index.js",
-            "require": "./lib/cjs/return/index.js"
+            "require": "./lib/cjs/return/index.cjs"
         },
         "./return/*.js": {
             "types": "./lib/types/return/*.d.ts",
             "import": "./lib/esm/return/*.js",
-            "require": "./lib/cjs/return/*.js"
+            "require": "./lib/cjs/return/*.cjs"
         }
     },
     "types": "./lib/types/index.d.ts",
     "scripts": {
         "build": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json && tsc -p tsconfig-declarations.json",
+        "rename": "node ./scripts/rename.cjs ./lib/cjs/",
         "lint": "yarn eslint src/**/*.ts"
     },
     "keywords": [
@@ -57,6 +58,7 @@
     },
     "homepage": "https://github.com/CoderAtParadise/amp-grassvalley/#readme",
     "devDependencies": {
+        "@types/glob": "^8",
         "@types/node": "^18.7.16",
         "@typescript-eslint/eslint-plugin": "^5.36.2",
         "@typescript-eslint/parser": "^5.36.2",
@@ -66,7 +68,9 @@
         "eslint-import-resolver-typescript": "^3.5.1",
         "eslint-plugin-import": "^2.26.0",
         "eslint-plugin-tsdoc": "^0.2.16",
+        "glob": "^8.0.3",
         "prettier": "^2.7.1",
+        "renamer": "^4.0.0",
         "typescript": "^4.8.3"
     }
 }
