@@ -18,10 +18,7 @@ async function getFiles(dir) {
 const main = async () => {
     const files = await getFiles(join(process.cwd(), process.argv[2]));
     files.forEach(async (file) => {
-        console.log(basename(file, ".js"));
-        console.log(
-            await rename(file, join(dirname(file), basename(file, ".js") + ".cjs"))
-        );
+        await rename(file, join(dirname(file), basename(file, ".js") + ".cjs"));
     });
 };
 
