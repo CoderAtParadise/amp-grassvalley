@@ -44,7 +44,7 @@
     "types": "./lib/types/index.d.ts",
     "scripts": {
         "build": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json && tsc -p tsconfig-declarations.json",
-        "rename": "node ./scripts/rename.cjs ./lib/cjs/",
+        "rename": "node ./scripts/rename.cjs ./lib/cjs/ && node ./scripts/replace.cjs ./lib/cjs",
         "lint": "yarn eslint src/**/*.ts"
     },
     "keywords": [
