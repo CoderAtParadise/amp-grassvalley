@@ -1,6 +1,6 @@
 import net from "net";
 import { AmpCommand } from "./AmpCommand.js";
-import { AmpReturn, CommandReturn } from "./AmpReturn.js";
+import { AmpReturn, CommandReturn, returnCodeMatches } from "./AmpReturn.js";
 import { zeroPad } from "./encodeUtils.js";
 import { ConditionalDeferred } from "./ConditionalDeferred.js";
 import { ACK } from "./return/ACK.js";
@@ -109,7 +109,7 @@ export class AmpChannel {
                     const code = strbuffer.slice(0, 4);
                     if (code === NAK.code || code === ERR.code) return true;
                     const ret = command.validReturns.find((value: AmpReturn) =>
-                        this.checkByteCountCommandCode(value, code)
+                        returnCodeMatches(value, code)
                     );
                     if (ret !== undefined) return true;
                     return false;
@@ -122,7 +122,7 @@ export class AmpChannel {
                 if (code === NAK.code || code === ERR.code)
                     resolve({ code: strbuffer });
                 const ret = command.validReturns.find((value: AmpReturn) =>
-                    this.checkByteCountCommandCode(value, code)
+                    returnCodeMatches(value, code)
                 );
                 if (ret && ret.returnData && code.length === 4) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -163,35 +163,6 @@ export class AmpChannel {
                 ) - 1
             ];
         return deferred.promise;
-    }
-
-    private checkByteCountCommandCode(
-        command: AmpReturn,
-        code: string
-    ): boolean {
-        for (let i = 0; i < code.length; i++) {
-            const char = code.at(i);
-            const cchar = command.code.at(i);
-            if (cchar === "x") {
-                if (
-                    !command.byteCount?.find(
-                        (element) =>
-                            element === char || element === char?.toUpperCase()
-                    )
-                )
-                    return false;
-            } else if (cchar === "y") {
-                if (
-                    !command.commandCode?.find(
-                        (element) =>
-                            element === char || element === char?.toUpperCase()
-                    )
-                )
-                    return false;
-            } else if (cchar !== char && cchar !== char?.toUpperCase())
-                return false;
-        }
-        return true;
     }
 
     private replaceByteCountCommandCode(
