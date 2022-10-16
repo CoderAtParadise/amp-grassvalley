@@ -36,23 +36,16 @@ export function getBit(byte: number, bit: number) {
     return (byte >> bit) % 2;
 }
 
+function getPosition(string: string, subString: string, index: number) {
+    // let i: number;
+    // for (i = 0; index > 0 && i !== -1; index -= 1) {
+    //     i = string.indexOf(subString, i ? i + 1 : i);
+    // }
+    return string.split(subString, index).join(subString).length;
+}
+
 export function decodeTimecode(timecode: string): string {
-    if (timecode.length < 14) {
-        const t = timecode
-            .split("")
-            .reverse()
-            .join("")
-            .slice(2, timecode.length);
-        const hours = t.slice(0, 2).split("").reverse().join("");
-        const minutes = t.slice(2, 4).split("").reverse().join("");
-        const seconds = t.slice(4, 6).split("").reverse().join("");
-        let frames = t.slice(6, t.length).split("").reverse().join("");
-        if (frames.length > 2) frames = "00";
-        return `${zeroPad(hours, 2)}:${zeroPad(minutes, 2)}:${zeroPad(
-            seconds,
-            2
-        )}:${zeroPad(frames, 2)}`;
-    } else {
+    const shortTimecode = (timecode: string) => {
         const frames = timecode.slice(0, 2);
         const seconds = timecode.slice(2, 4);
         const minutes = timecode.slice(4, 6);
@@ -61,5 +54,25 @@ export function decodeTimecode(timecode: string): string {
             seconds,
             2
         )}:${zeroPad(frames, 2)}`;
+    };
+
+    const longTimecode = (timecode: string) => {
+        const seconds = timecode.slice(4, 6);
+        const minutes = timecode.slice(6, 8);
+        const hours = timecode.slice(8, 10);
+        return `${zeroPad(hours, 2)}:${zeroPad(minutes, 2)}:${zeroPad(
+            seconds,
+            2
+        )}:00`;
+    };
+
+    if (timecode.length <= 10) return shortTimecode(timecode);
+    else if (timecode.length <= 12) return longTimecode(timecode);
+    else {
+        const t = timecode.slice(0, 10);
+        if (getPosition(timecode, t, 2) === 14) return shortTimecode(timecode);
+        else if (getPosition(timecode, t, 2) === 16)
+            return longTimecode(timecode);
+        else return shortTimecode(timecode);
     }
 }
