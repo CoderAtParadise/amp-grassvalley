@@ -1,4 +1,3 @@
-import { time } from "console";
 import { zeroPad } from "./encodeUtils.js";
 
 export function hexToString(hex: string): string {
@@ -36,14 +35,6 @@ export function getBit(byte: number, bit: number) {
     return (byte >> bit) % 2;
 }
 
-function getPosition(string: string, subString: string, index: number) {
-    // let i: number;
-    // for (i = 0; index > 0 && i !== -1; index -= 1) {
-    //     i = string.indexOf(subString, i ? i + 1 : i);
-    // }
-    return string.split(subString, index).join(subString).length;
-}
-
 const frameMap: { framerate: number; isWholeFrame: boolean }[] = [
     { framerate: 23.976, isWholeFrame: false },
     { framerate: 24, isWholeFrame: true },
@@ -57,7 +48,7 @@ const frameMap: { framerate: number; isWholeFrame: boolean }[] = [
 ];
 
 function calcFramerate(inframe: number, totalminutes: number) {
-    let framerate: number = 0;
+    let framerate = 0;
     for (const frame of frameMap) {
         const fdr = frame.framerate * 60 * totalminutes;
         if (inframe >= fdr && inframe < fdr + frame.framerate) {
