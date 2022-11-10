@@ -1,6 +1,6 @@
 {
     "name": "@coderatparadise/amp-grassvalley",
-    "version": "2.1.6",
+    "version": "2.1.7",
     "description": "Node implementation of the Grassvalley Amp Specification v4",
     "packageManager": "yarn@4.0.0-rc.18",
     "type": "module",

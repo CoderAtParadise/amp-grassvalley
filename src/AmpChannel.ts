@@ -61,10 +61,16 @@ export class AmpChannel {
                 for (let i = 0; i < this.promises.length; i++) {
                     const promise = this.promises[i];
                     const resolve = promise.canResolve(buffer);
-                    if (resolve && promise.resolve) {
-                        promise.resolve(buffer);
-                        this.promises.splice(i, 1);
-                        break;
+                    if (promise.resolve) {
+                        if (resolve) {
+                            promise.resolve(buffer);
+                            this.promises.splice(i, 1);
+                            break;
+                        }
+                        if (Date.now() - promise.autoResolve >= 500) {
+                            promise.resolve(Buffer.from("1112"));
+                            this.promises.splice(i, 1);
+                        }
                     }
                 }
             });
