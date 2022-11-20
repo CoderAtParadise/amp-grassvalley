@@ -14,7 +14,9 @@ export class AmpChannel {
         this.channel = channel;
     }
 
-    async open(retryHandler: () => Promise<boolean>): Promise<boolean> {
+    async open(
+        retryHandler: (tryCounter: number) => Promise<boolean>
+    ): Promise<boolean> {
         return new Promise<boolean>((resolve) => {
             const callback = async () => {
                 if (this.channel === undefined || this.channel === "") {
@@ -53,7 +55,7 @@ export class AmpChannel {
             this.socket.on("close", (err) => {
                 if (!this.shutdown && !err) {
                     this.crat_open = false;
-                    resolve(retryHandler());
+                    resolve(retryHandler(0));
                 }
             });
 
