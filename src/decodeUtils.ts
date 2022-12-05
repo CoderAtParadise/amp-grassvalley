@@ -59,7 +59,10 @@ function calcFramerate(inframe: number, totalminutes: number) {
     return framerate;
 }
 
-export function decodeTimecode(timecode: string): string {
+export function decodeTimecode(
+    timecode: string,
+    internal: boolean = false
+): string {
     const shortTimecode = (timecode: string) => {
         const frames = timecode.slice(0, 2);
         const seconds = timecode.slice(2, 4);
@@ -95,6 +98,11 @@ export function decodeTimecode(timecode: string): string {
     else if (timecode.length >= 12 && timecode.length <= 17) {
         return longTimecode(timecode);
     } else {
+        // Try brute force as this sometimes happens
+        if (!internal) {
+            const str = timecode.split("7404");
+            return decodeTimecode(str[0], true);
+        }
         // Return an invalid timecode as decoding becomes impossible
         return "--:--:--:--";
     }
